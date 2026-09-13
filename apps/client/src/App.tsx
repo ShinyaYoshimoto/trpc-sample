@@ -4,6 +4,7 @@ import { trpc } from './trpc.ts'
 
 function App() {
   const [title, setTitle] = useState('')
+  const [pendingTodoId, setPendingTodoId] = useState<string | null>(null)
   const utils = trpc.useUtils()
   const todosQuery = trpc.todo.getTodos.useQuery()
 
@@ -15,8 +16,14 @@ function App() {
   })
 
   const toggleTodo = trpc.todo.toggleTodo.useMutation({
+    onMutate: ({ id }) => {
+      setPendingTodoId(id)
+    },
     onSuccess: async () => {
       await utils.todo.getTodos.invalidate()
+    },
+    onSettled: () => {
+      setPendingTodoId(null)
     },
   })
 
@@ -47,10 +54,22 @@ function App() {
           </button>
         </form>
 
-        {addTodo.error ? <p className="error-text">{addTodo.error.message}</p> : null}
+        {addTodo.error ? (
+          <p className="error-text" role="alert">
+            {addTodo.error.message}
+          </p>
+        ) : null}
 
-        {todosQuery.isLoading ? <p>読み込み中...</p> : null}
-        {todosQuery.error ? <p className="error-text">{todosQuery.error.message}</p> : null}
+        {todosQuery.isLoading ? (
+          <p aria-live="polite" role="status">
+            読み込み中...
+          </p>
+        ) : null}
+        {todosQuery.error ? (
+          <p className="error-text" role="alert">
+            {todosQuery.error.message}
+          </p>
+        ) : null}
 
         <ul className="todo-list">
           {todosQuery.data?.map((todo) => (
@@ -60,7 +79,7 @@ function App() {
                   type="checkbox"
                   checked={todo.completed}
                   onChange={() => toggleTodo.mutate({ id: todo.id })}
-                  disabled={toggleTodo.isPending}
+                  disabled={pendingTodoId === todo.id}
                 />
                 <span className={todo.completed ? 'completed' : ''}>{todo.title}</span>
               </label>
