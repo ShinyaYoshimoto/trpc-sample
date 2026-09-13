@@ -9,7 +9,7 @@
   },
   "exports": {
     "./router": {
-      "types": "./src/router.ts",
+      "types": "./dist/router.d.ts",
       "import": "./dist/router.js",
       "default": "./dist/router.js"
     }

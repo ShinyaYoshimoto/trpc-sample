@@ -4,9 +4,10 @@ import { trpc } from './trpc.ts'
 
 function App() {
   const [title, setTitle] = useState('')
-  const [pendingTodoId, setPendingTodoId] = useState<string | null>(null)
+  const [pendingTodoIds, setPendingTodoIds] = useState<Set<string>>(() => new Set())
   const utils = trpc.useUtils()
   const todosQuery = trpc.todo.getTodos.useQuery()
+  const statusMessageId = todosQuery.error ? 'todos-error' : 'todos-status'
 
   const addTodo = trpc.todo.addTodo.useMutation({
     onSuccess: async () => {
@@ -17,13 +18,17 @@ function App() {
 
   const toggleTodo = trpc.todo.toggleTodo.useMutation({
     onMutate: ({ id }) => {
-      setPendingTodoId(id)
+      setPendingTodoIds((current) => new Set(current).add(id))
     },
     onSuccess: async () => {
       await utils.todo.getTodos.invalidate()
     },
-    onSettled: () => {
-      setPendingTodoId(null)
+    onSettled: (_data, _error, variables) => {
+      setPendingTodoIds((current) => {
+        const next = new Set(current)
+        next.delete(variables.id)
+        return next
+      })
     },
   })
 
@@ -61,17 +66,21 @@ function App() {
         ) : null}
 
         {todosQuery.isLoading ? (
-          <p aria-live="polite" role="status">
+          <p id="todos-status" aria-live="polite" role="status">
             読み込み中...
           </p>
         ) : null}
         {todosQuery.error ? (
-          <p className="error-text" role="alert">
+          <p id="todos-error" className="error-text" role="alert">
             {todosQuery.error.message}
           </p>
         ) : null}
 
-        <ul className="todo-list">
+        <ul
+          className="todo-list"
+          aria-busy={todosQuery.isLoading || toggleTodo.isPending}
+          aria-describedby={todosQuery.isLoading || todosQuery.error ? statusMessageId : undefined}
+        >
           {todosQuery.data?.map((todo) => (
             <li key={todo.id} className="todo-item">
               <label>
@@ -79,7 +88,7 @@ function App() {
                   type="checkbox"
                   checked={todo.completed}
                   onChange={() => toggleTodo.mutate({ id: todo.id })}
-                  disabled={pendingTodoId === todo.id}
+                  disabled={pendingTodoIds.has(todo.id)}
                 />
                 <span className={todo.completed ? 'completed' : ''}>{todo.title}</span>
               </label>
