@@ -1,4 +1,5 @@
 {
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
-  "postStartCommand": "sudo corepack enable && corepack prepare pnpm@latest --activate && pnpm install && (setsid nohup pnpm dev > /tmp/dev.log 2>&1 < /dev/null &)"
+  "postStartCommand": "sudo corepack enable && corepack prepare pnpm@latest --activate && pnpm install",
+  "postAttachCommand": "test -f /tmp/dev.pid && kill -0 $(cat /tmp/dev.pid) 2>/dev/null || (setsid nohup pnpm dev > /tmp/dev.log 2>&1 < /dev/null & echo $! > /tmp/dev.pid)"
 }
