@@ -1,0 +1,4 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "postStartCommand": "corepack enable && pnpm install && (pnpm dev > /tmp/dev.log 2>&1 &)"
+}
