@@ -1,0 +1,16 @@
+{
+  "name": "trpc-sample",
+  "private": true,
+  "packageManager": "pnpm@10.15.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently \"pnpm --filter @trpc-sample/server dev\" \"pnpm --filter @trpc-sample/client dev\"",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r --if-present lint"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}
