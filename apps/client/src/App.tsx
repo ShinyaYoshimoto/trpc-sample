@@ -8,6 +8,7 @@ function App() {
   const utils = trpc.useUtils()
   const todosQuery = trpc.todo.getTodos.useQuery()
   const statusMessageId = todosQuery.error ? 'todos-error' : 'todos-status'
+  const canSubmit = title.trim().length > 0
 
   const addTodo = trpc.todo.addTodo.useMutation({
     onSuccess: async () => {
@@ -32,10 +33,17 @@ function App() {
     },
   })
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const addTodoErrorMessage =
+    addTodo.error?.data?.zodError?.fieldErrors.title?.[0] ?? addTodo.error?.message
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    await addTodo.mutateAsync({ title })
+    if (!canSubmit) {
+      return
+    }
+
+    addTodo.mutate({ title })
   }
 
   return (
@@ -54,14 +62,14 @@ function App() {
             onChange={(event) => setTitle(event.target.value)}
             placeholder="新しい Todo を入力"
           />
-          <button type="submit" disabled={addTodo.isPending}>
+          <button type="submit" disabled={!canSubmit || addTodo.isPending}>
             {addTodo.isPending ? '追加中...' : '追加'}
           </button>
         </form>
 
-        {addTodo.error ? (
+        {addTodoErrorMessage ? (
           <p className="error-text" role="alert">
-            {addTodo.error.message}
+            {addTodoErrorMessage}
           </p>
         ) : null}
 
@@ -78,7 +86,7 @@ function App() {
 
         <ul
           className="todo-list"
-          aria-busy={todosQuery.isLoading || toggleTodo.isPending}
+          aria-busy={todosQuery.isLoading}
           aria-describedby={todosQuery.isLoading || todosQuery.error ? statusMessageId : undefined}
         >
           {todosQuery.data?.map((todo) => (

@@ -1,7 +1,20 @@
 import { TRPCError, initTRPC } from '@trpc/server'
-import { z } from 'zod'
+import { ZodError, z } from 'zod'
 
-const t = initTRPC.create()
+const t = initTRPC.create({
+  errorFormatter({ shape, error }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError:
+          error.cause instanceof ZodError
+            ? z.flattenError(error.cause as ZodError<Record<string, unknown>>)
+            : null,
+      },
+    }
+  },
+})
 
 const todoInputSchema = z.object({
   title: z.string().trim().min(1, 'タイトルは必須です'),

@@ -1,5 +1,19 @@
 {
   "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
-  "postStartCommand": "sudo corepack enable && corepack prepare pnpm@latest --activate && pnpm install",
+  "containerEnv": {
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
+  },
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "client",
+      "onAutoForward": "openBrowser"
+    },
+    "4000": {
+      "label": "server",
+      "onAutoForward": "silent"
+    }
+  },
+  "postStartCommand": "sudo corepack enable && pnpm install",
   "postAttachCommand": "test -f /tmp/dev.pid && kill -0 $(cat /tmp/dev.pid) 2>/dev/null || (setsid nohup pnpm dev > /tmp/dev.log 2>&1 < /dev/null & echo $! > /tmp/dev.pid)"
 }
